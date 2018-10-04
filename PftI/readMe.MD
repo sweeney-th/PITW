@@ -8,6 +8,9 @@ I wrote it to be read in the following order, but if something strikes your
 fancy, it should be more or less sensible to pick it up by topic if you've
 got a little familiarity.
 
+I'd just take the code, comment out what you don't want to see, and then 
+run away and see what happens.
+
 startHere.pl
 typesAndPrinting.pl
 usingArrays.pl
@@ -23,3 +26,6 @@ this isn't comprehensive.
 Consider the below my sources cited and my further reading list:
 
 Modern Perl, 4th ed.
+https://perlmaven.com/
+
+
