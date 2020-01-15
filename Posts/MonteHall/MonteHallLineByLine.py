@@ -1,21 +1,33 @@
 
 import random
 
-# first we need the potential outcomes
-doors = ["Door1", "Door2", "Door3"]
+# a simple way to represent a door
+class Door(object):
 
-# then the results we have
-outcomes = ["Win", "Loss", "Loss"]
+    # will have contents (win or loss)
+    contents = None
 
-# randomize the order of wins/losses
+    # will or will not be opened at any given time
+    isOpen = False
+
+# make three blank doors
+door1 = Door()
+door2 = Door()
+door3 = Door()
+
+# potential outcomes
+outcomes = ["win", "loss", "loss"]
+
+# shuffle the results
 random.shuffle(outcomes)
 
-# associate the wins and losses with a door
-doorsDict = dict(zip(doors, outcomes))
+# doors
+door1.contents = outcomes[0]
+door2.contents = outcomes[1]
+door3.contents = outcomes[2]
 
-# a function to choose a random door
-def pickRandomDoor(doorsDict):
-    return list(doorsDict.keys())[random.randint(0,2)]
+# simply for convinience
+doors = [door1, door2, door3]
 
-ourDoor = pickRandomDoor(doorsDict)
-
+for d in doors:
+    print(d.contents)
