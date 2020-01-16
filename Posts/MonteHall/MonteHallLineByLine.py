@@ -80,24 +80,17 @@ def revealLoss(doors, chosenDoor):
 doorOpened = openDoor(revealLoss(doors, chosenDoor))
 
 def switchDoors(doors, currentDoor):
-    # there will be one door that isn't open or our current guess
-    return [
-        d for d in doors if d.isOpen == False
-            and d.name != currentDoor.name
-    ][0]
-
-def switchDoors2(doors, currentDoor):
     # pick a door that ...
     for d in doors:
         # ...isn't the current door...
         if d == currentDoor:
-            continue # skip the iteration
+            continue # to the next "d"
         # ... and isn't opened
         if d.isOpen == True:
-            continue
+            continue # to the next "d"
         return d
 
 print("Our first choice is", chosenDoor.name)
 print("The door that was opened", doorOpened.name)
-chosenDoor = switchDoors2(doors, chosenDoor)
+chosenDoor = switchDoors(doors, chosenDoor)
 print("Our choice after switching is", chosenDoor.name)
