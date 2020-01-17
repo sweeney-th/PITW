@@ -90,7 +90,83 @@ def switchDoors(doors, currentDoor):
             continue # to the next "d"
         return d
 
-print("Our first choice is", chosenDoor.name)
-print("The door that was opened", doorOpened.name)
-chosenDoor = switchDoors(doors, chosenDoor)
-print("Our choice after switching is", chosenDoor.name)
+# print("Our first choice is", chosenDoor.name)
+# print("The door that was opened", doorOpened.name)
+# chosenDoor = switchDoors(doors, chosenDoor)
+# print("Our choice after switching is", chosenDoor.name)
+# print("This means we got a ...", chosenDoor.contents)
+
+
+
+# now let's make a function that plays a game for
+# us so we can do a whole of repitions at once
+
+# all we need to tell it is if we want to switch or not
+def runMonteHall(switch = True):
+
+    ### set up the game
+    # potential outcomes
+    outcomes = ["win", "loss", "loss"]
+
+    # shuffle the results
+    random.shuffle(outcomes)
+
+    # set up the doors
+    door1 = Door()
+    door2 = Door()
+    door3 = Door()
+
+    # assign names and contents them
+    door1.contents = outcomes[0]
+    door1.name = "Door #1"
+
+    door2.contents = outcomes[1]
+    door2.name = "Door #2"
+
+    door3.contents = outcomes[2]
+    door3.name = "Door #3"
+
+    # simply for convinience
+    doors = [door1, door2, door3]
+
+
+
+    ### make our initial selection
+    chosenDoor = pickRandomDoor(doors)
+
+
+
+    ### reveal a door 
+    doorOpened = openDoor(revealLoss(doors, chosenDoor))
+
+
+
+    ### the switch!
+    if switch == True:
+        chosenDoor = switchDoors(doors, chosenDoor)
+    else: # stay with our first guess
+        pass
+
+    return chosenDoor
+
+
+# now we can simulate 1,000 games
+switchGames = [runMonteHall(switch = True).contents for i in range(1000)]
+stayGames = [runMonteHall(switch = False).contents for i in range(1000)]
+
+# for convienice, we'll make a function to score them
+def scoreGames(gamesList):
+
+    wins = [result for result in gamesList if result == "win"]
+    losses = [result for result in gamesList if result == "loss"]
+
+    winPercent = round(len(wins)/len(gamesList), 2)
+    lossPercent = round(len(losses)/len(gamesList), 2)
+
+    return {"win %:": winPercent, "loss %:": lossPercent}
+
+switchResults = scoreGames(switchGames)
+print("With switching:", switchResults)
+
+stayResults = scoreGames(stayGames)
+print("With switching:", stayResults)
