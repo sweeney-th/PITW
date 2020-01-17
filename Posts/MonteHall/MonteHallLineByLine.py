@@ -90,11 +90,15 @@ def switchDoors(doors, currentDoor):
             continue # to the next "d"
         return d
 
-# print("Our first choice is", chosenDoor.name)
-# print("The door that was opened", doorOpened.name)
-# chosenDoor = switchDoors(doors, chosenDoor)
-# print("Our choice after switching is", chosenDoor.name)
-# print("This means we got a ...", chosenDoor.contents)
+### we can see the results of a game now
+print("Our first choice is", chosenDoor.name)
+print("The door that was opened", doorOpened.name)
+
+# if we switch
+chosenDoor = switchDoors(doors, chosenDoor)
+
+print("Our choice after switching is", chosenDoor.name)
+print("This means we got a ...", chosenDoor.contents)
 
 
 
@@ -151,22 +155,27 @@ def runMonteHall(switch = True):
 
 
 # now we can simulate 1,000 games
-switchGames = [runMonteHall(switch = True).contents for i in range(1000)]
-stayGames = [runMonteHall(switch = False).contents for i in range(1000)]
+switchGames = [runMonteHall(switch = True).contents for i in range(5000)]
+stayGames = [runMonteHall(switch = False).contents for i in range(5000)]
 
 # for convienice, we'll make a function to score them
 def scoreGames(gamesList):
 
+    # count wins vs losses
     wins = [result for result in gamesList if result == "win"]
     losses = [result for result in gamesList if result == "loss"]
 
+    # get percents
     winPercent = round(len(wins)/len(gamesList), 2)
     lossPercent = round(len(losses)/len(gamesList), 2)
 
+    # return a dict of results
     return {"win %:": winPercent, "loss %:": lossPercent}
 
+
+# let's take a look
 switchResults = scoreGames(switchGames)
 print("With switching:", switchResults)
 
 stayResults = scoreGames(stayGames)
-print("With switching:", stayResults)
+print("With staying:", stayResults)
