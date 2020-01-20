@@ -1,0 +1,28 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{R}
+
+library(wordcloud)   # wordcloud generator
+library(tm)          # text-mining 
+
+# read in our data
+r.text <- readLines("jail.txt")
+
+# create a corpus objext from the text
+r.corpus <- VCorpus(VectorSource(r.text))
+
+# clean the words: whitespace, punctuation, remove numbers, get root words, remove stopwords
+c.corpus <- tm_map(r.corpus, content_transformer(removePunctuation))
+c.corpus <- tm_map(c.corpus, content_transformer(removeNumbers))
+c.corpus <- tm_map(c.corpus, content_transformer(stripWhitespace))
+c.corpus <- tm_map(c.corpus, removeWords, stopwords())
+
+# set a palate  
+pal <-brewer.pal(8,"Dark2")
+
+# create a wordcloud
+wordcloud(c.corpus, min.freq = 7, random.order = FALSE, colors = pal)
+```
