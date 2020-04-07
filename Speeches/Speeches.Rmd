@@ -1,0 +1,107 @@
+---
+title: "Untitled"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+```{R setup}
+
+setwd("~/Workspace/PITW/Speeches")
+
+library(wordcloud)   # wordcloud generator
+library(tm)          # text-mining
+```
+
+
+```{R}
+
+preProcessText <- function(file)
+{
+  
+  # read in the file
+  rawData <-  paste0(readLines(file), collapse = " ")
+  
+  # lowercase all the words
+  rawData <- lapply(rawData, tolower)
+  
+  # some spot stemming and cleanup after viewing output (the SnowballC package doesn't do well with this dataset)
+  rawData <- gsub("americans", "america", rawData)
+  rawData <- gsub("american", "america", rawData)
+  rawData <- gsub("nation's", "nation", rawData)
+  rawData <- gsub("nations", "nation", rawData)
+
+  # create a corpus objext from the text
+  corpus <- VCorpus(VectorSource(rawData))
+  
+  # clean the words: whitespace, punctuation, remove numbers, remove stopwords
+  corpus <- tm_map(corpus, content_transformer(removePunctuation))
+  corpus <- tm_map(corpus, content_transformer(removeNumbers))
+  corpus <- tm_map(corpus, content_transformer(stripWhitespace))
+  corpus <- tm_map(corpus, removeWords, stopwords())
+  corpus <- tm_map(corpus, removeWords, c("the", "and", "will"))
+  
+  corpus
+
+}
+```
+
+```{R}
+
+createWordcloud <- function(president, minFreq, randomOrder, colorScheme = colorScheme,
+  width = 6, height = 6, units = "in", res = 100
+)
+{
+  size <- paste("Size", as.character(height), "X", as.character(width), sep = "")
+  
+  resultsTag <- paste("Outputs/", "Minimum", as.character(minFreq), "res", as.character(res), size, sep = "")
+  
+  dir.create(resultsTag)
+  
+  png(paste(resultsTag, "/", president, ".png", sep = ""), width = width, height = height, units = 'in', res = res)
+  
+  # create a layout 
+  layout(matrix(c(1, 2), nrow = 2), heights = c(1, 2))
+  par(mar = rep(0, 4))
+  
+  # open a plot so we can title it
+  plot.new()
+  
+  # make the title
+  text(x = 0.5, y = 0.5, paste(president, ", minimum word frequency: ", as.character(minFreq), sep = ""))
+  
+  # create a wordcloud
+  wordcloud(preProcessText(paste("SpeechData/", president, ".txt", sep = "")),
+            min.freq = minFreq,
+            random.order = randomOrder,
+            colors = colorScheme)
+  dev.off()
+}
+```
+
+```{R}
+
+colorScheme <- brewer.pal(8, "RdYlBu")
+minFreq <- 1
+randomOrder <- FALSE
+res <- 800
+height <- 12
+width <- 12
+
+createWordcloud("Bush Senior", minFreq = minFreq, randomOrder = randomOrder,
+                colorScheme = colorScheme, res = res, height = height, width = height)
+
+createWordcloud("Clinton", minFreq = minFreq, randomOrder = randomOrder,
+                colorScheme = colorScheme, res = res, height = height, width = height)
+
+createWordcloud("Bush Junior", minFreq = minFreq, randomOrder = randomOrder,
+                colorScheme = colorScheme, res = res, height = height, width = height)
+
+createWordcloud("Obama", minFreq = minFreq, randomOrder = randomOrder,
+                colorScheme = colorScheme, res = res, height = height, width = height)
+
+createWordcloud("Trump", minFreq = minFreq, randomOrder = randomOrder,
+                colorScheme = colorScheme, res = res, height = height, width = height)
+
+```

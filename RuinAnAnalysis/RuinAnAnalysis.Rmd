@@ -1,0 +1,165 @@
+---
+title: "How to Ruin Your Differential Expression Analysis in 2 Easy Steps"
+subtitle: "A study in factors screwing you up again"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+*note: I am not associated with any of the DESeq2 team, I'm simply using their awesome tool.*
+
+*note: The booby trap discussed in this write-up is not caused by DESeq2. It's caused by a notoriously finicky data-type in R that arose when corrupted data was __passed__ to DESeq2. DESeq2 is great.*
+
+I recently found myself dodging an analytical bullet after inheriting an old project that needed somebody to dust is off and wrap it up. The traps that lay in wait for me are simple enough to (accidentally) create and easy enough to step in that I thought I would write up a quick post-mortem case study. An old hand with DESeq2 might have spotted them right away, but alas, I was new, coming off a few years of non-RNA data analyis, Shiny development, and Python work. They might be basic, but it's worth being aware of because of just how easy they are to make and how bad they can mess you up.
+
+First, let's run a simple example analysis using the awesome [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html) package to get our baseline. Aside from some personal-preference level formatting adjustments, this is a cut-and-paste example from the very thorough [DESeq2 vignette](http://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html).
+
+```{R, message = FALSE}
+
+library(DESeq2)    # go-to DE analysis package
+library(pasilla)   # sample data used in tutorial
+library(tidyverse) # duh 
+
+# get the counts information from the pasilla package
+pasCts <- system.file("extdata", "pasilla_gene_counts.tsv",
+                      package = "pasilla", mustWork = TRUE)
+
+# load the sample annotation file from the pasilla package
+pasAnno <- system.file("extdata", "pasilla_sample_annotation.csv",
+                       package = "pasilla", mustWork = TRUE)
+
+# create a matrix of counts
+cts <- as.matrix(read.csv(pasCts, sep = "\t", row.names = "gene_id"))
+
+# read in the sample data.
+coldata <- read.csv(pasAnno, row.names = 1)
+
+# select the desired features (just following the tutorial)
+coldata <- coldata[, c("condition","type")]
+
+# clean/standardize the rownames
+rownames(coldata) <- sub("fb", "", rownames(coldata))
+
+# sort/reorder the columns to match samples
+cts <- cts[, rownames(coldata)]
+
+# create an DESeq2 input object
+dds <- DESeqDataSetFromMatrix(countData = cts,
+                              colData = coldata, design = ~ condition)
+
+# re-level the factors to desired reference
+dds$condition <- relevel(dds$condition, ref = "untreated")
+
+# execute the analysis
+dds <- DESeq(dds)
+
+# extract the results
+res <- results(dds)
+```
+
+We've now gotten the results of a basic DE (differential expression) experiment. If we wanted to filter for DE genes, we might be something like this. 
+
+```{R}
+
+# get results using the "tidy" option to include gene names
+resLabeled <- results(dds, tidy = TRUE) %>%
+  # convert from matrix to data frame so we can 
+  data.frame() %>% 
+  # filter on desired cuttof of ajusted p-value
+  filter(padj < 0.05)
+
+# get the fly-base ids
+sigGenes <- resLabeled %>% select(row)
+
+sigGenes
+```
+
+Cool! This is how it goes right! What could go wrong? In this case, something I should have noticed sooner but is a very easy mistake to make when you're dealing with datasets you don't know the history of. It's not hard to imagine these files being passed around command lines, manipulated with awk, or, heaven forbid, [opened in Excel](https://nature.berkeley.edu/garbelottoat/?p=1488). In my case, what appeared be a header from a previous iteration of the counts file had been duplicated, and was nestled somewhere around line 8600, thus evading visual inspection. It looked something like this:
+
+    sampleName sampleName sampleName sampleName sampleName sampleName sampleName
+  
+Perhaps tables had be stacked on top of one another to make the counts file and there was an off-by-one error (though those *never* happen anymore, right? No?). I don't know. But the downsteam effects are significant and potentially *slient*. Let's recreate the to see how exactly they happen and learn to stop them!
+
+
+```{R}
+
+ctsBad <- cts
+
+ctsBad[8600, ] <- c("here", "there", "and", "everywhere", "yeah", "whoo!", "oops!")
+
+ctsBad[8597:8602, ]
+```
+
+There's the little menace. Right there. So now we can see that all the sudden there are " " around all the values. They've been silenty coerced to everyone's favorite type, the `factor`.
+
+```{R}
+
+message("Before:")
+class(cts[1,1])
+
+message("After:")
+class(ctsBad[1,1])
+```
+
+Of note: at this point, if you try to use this matrix at this point DESeq2 __will__ save you from yourself!
+
+```{R}
+
+# To the uninitiated, tryCatch() will attempt something to see if it makes an error.
+# I'm just using it to show DESeq2 will catch this, and then priting the error it gives. 
+tryCatch(
+  {
+    # try to use the bad one
+    dds <- DESeqDataSetFromMatrix(countData = ctsBad,
+                                  colData = coldata, design = ~ condition)
+  },
+  # "upon error 'e', use this function to show a message of 'e'"
+  error = function(e) { message(e)}
+)
+
+```
+
+As mentioned, we can *see* the issue if we notice the quotes (a good reason to always inspect your data, even if you want to shove it into a nueral net in fewer than 5 lines of code). 
+
+Beautiful integers. Below is the same file, excepted I replced the 70 on line 3 with "seventy" to simulate an all-too feasible real-world data scenario.
+
+```{R}
+
+write.table(ctsBad, 'badCounts.csv', sep = ",")
+
+# read in subtly evil file
+ctsBad <- read.delim("badCounts.csv", sep = ",")
+
+head(ctsBad)
+```
+
+inclde write table and write.csv?
+
+Now we've got a factor from a small tweak of a good file. The full version, that happened to me would look like this, where a while row got messed up:
+
+```{R}
+
+# read in subtly evil file
+ctsReallyBad <- read.delim("reallyBadCounts.csv", sep = ",")
+
+head(ctsReallyBad)
+```
+
+Now
+
+
+```{R}
+
+# To the uninitiated, tryCatch() will attempt something to see if it makes an error.
+# I'm just using it to show DESeq2 will catch this, and then priting the error it gives. 
+tryCatch(
+  {
+    # try to use the bad one
+    dds <- DESeqDataSetFromMatrix(countData = ctsReallyBad,
+                                  colData = coldata, design = ~ condition)
+  },
+  # "upon error 'e', use this function to show a message of 'e'"
+  error = function(e) { message(e)}
+)
+
+```

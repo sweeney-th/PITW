@@ -75,7 +75,7 @@ def revealLoss(doors, chosenDoor):
         doorAtNumber = doors[number]
         if doorAtNumber.isOpen is False \
             and doorAtNumber.contents is not "win" \
-                 and doorAtNumber is not chosenDoor:
+                    and doorAtNumber is not chosenDoor:
             return doorAtNumber
 
 # now we can reveal a door 
