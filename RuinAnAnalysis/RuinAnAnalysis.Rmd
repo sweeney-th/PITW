@@ -126,11 +126,18 @@ Beautiful integers. Below is the same file, excepted I replced the 70 on line 3 
 ```{R}
 
 write.table(ctsBad, 'badCounts.csv', sep = ",")
+write.csv(ctsBad, 'badCounts2.csv')
 
 # read in subtly evil file
 ctsBad <- read.delim("badCounts.csv", sep = ",")
+ctsBad2 <- read.delim("badCounts2.csv", sep = ",")
+
+head(ctsBad) %>% dim()
+head(ctsBad2) %>% dim()
 
 head(ctsBad)
+head(ctsBad2)
+
 ```
 
 inclde write table and write.csv?
